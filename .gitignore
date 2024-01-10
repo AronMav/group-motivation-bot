@@ -1,0 +1,4 @@
+/target
+log.yml
+../db.sqlite3
+/.idea
