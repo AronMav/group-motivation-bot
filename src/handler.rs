@@ -49,32 +49,35 @@ pub async fn handle(
         if reply != Option::None {
 
             let sender = reply.unwrap().from().unwrap().clone();
-            let id_helper = &sender.id;
-            let str_id_helper = &id_helper.to_string();
+            let sender_id = &sender.id;
+            let str_sender_id = &sender_id.to_string();
             match m.kind {
                 Common(ref common_msg) => {
                     if let Some(user) = &common_msg.from {
-                        if &user.id != id_helper && str_id_helper != &String::from("6685232640") {
+                        if &user.id != sender_id && str_sender_id != &String::from("6685232640") {
                             if m.text()
                                 .unwrap()
                                 .to_lowercase()
                                 .contains("спасибо") {
 
+                                //todo: обернуть в структуру
                                 let sender_username = &sender.username.unwrap_or_else(|| String::from(""));
                                 let sender_first_name= &sender.first_name;
                                 let sender_last_name = &sender.last_name.unwrap_or_else(|| String::from(""));
 
                                 cs.store_units(
-                                    str_id_helper,
+                                    str_sender_id,
                                     sender_username,
                                     sender_first_name,
                                     sender_last_name,
                                 )?;
+
+                                //todo: обернуть в структуру
                                 let recipient = m.from().unwrap().clone();
                                 let recipient_username = &recipient.username.unwrap_or_else(|| String::from(""));
                                 let recipient_first_name= &recipient.first_name;
                                 let recipient_last_name = &recipient.last_name.unwrap_or_else(|| String::from(""));
-                                let units: i32 = cs.get_units(str_id_helper)?;
+                                let units: i32 = cs.get_units(str_sender_id)?;
                                 response = String::from(
                                     format!("{} {} (@{}) ➡️ {} {} (@{})\nРепутация повышена: {}",
                                         &recipient_first_name,
