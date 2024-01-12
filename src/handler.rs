@@ -48,8 +48,8 @@ pub async fn handle(
 
         if reply != Option::None {
 
-            let helper = reply.unwrap().from().unwrap().clone();
-            let id_helper = &helper.id;
+            let sender = reply.unwrap().from().unwrap().clone();
+            let id_helper = &sender.id;
             let str_id_helper = &id_helper.to_string();
             match m.kind {
                 Common(ref common_msg) => {
@@ -60,18 +60,31 @@ pub async fn handle(
                                 .to_lowercase()
                                 .contains("спасибо") {
 
-                                let username = &helper.username.unwrap_or_else(|| String::from(""));
-                                let first_name= &helper.first_name;
-                                let last_name = &helper.last_name.unwrap_or_else(|| String::from(""));
+                                let sender_username = &sender.username.unwrap_or_else(|| String::from(""));
+                                let sender_first_name= &sender.first_name;
+                                let sender_last_name = &sender.last_name.unwrap_or_else(|| String::from(""));
 
                                 cs.store_units(
                                     str_id_helper,
-                                    username,
-                                    first_name,
-                                    last_name,
+                                    sender_username,
+                                    sender_first_name,
+                                    sender_last_name,
                                 )?;
+                                let recipient = m.from().unwrap().clone();
+                                let recipient_username = &recipient.username.unwrap_or_else(|| String::from(""));
+                                let recipient_first_name= &recipient.first_name;
+                                let recipient_last_name = &recipient.last_name.unwrap_or_else(|| String::from(""));
                                 let units: i32 = cs.get_units(str_id_helper)?;
-                                response = String::from(format!("@{}\nРепутация повышена: {}", &username, units));
+                                response = String::from(
+                                    format!("{} {} (@{}) ➡️ {} {} (@{})\nРепутация повышена: {}",
+                                        &recipient_first_name,
+                                        &recipient_last_name,
+                                        &recipient_username,
+                                        &sender_first_name,
+                                        &sender_last_name,
+                                        &sender_username,
+                                        units)
+                                );
                             }
                         }
                     }
