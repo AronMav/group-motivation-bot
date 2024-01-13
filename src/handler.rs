@@ -2,7 +2,7 @@ use std::{error::Error, sync::Arc};
 use teloxide::{
     prelude::*,
     types::MessageKind::Common,
-    utils::command::BotCommands
+    utils::command::BotCommands,
 };
 
 use crate::chat_server::ChatServer;
@@ -24,7 +24,7 @@ pub async fn handle(
     
     // Telegram uses negative numbers for groups' `chat_id`
     if chat_id > 0 {
-        bot.send_message(m.chat.id, "This bot is only useful in groups.").await?;
+        bot.send_message(m.chat.id, "Этот бот используется только в группах.").await?;
     }
 
     let text =
@@ -35,7 +35,7 @@ pub async fn handle(
 
     let mut response = String::from("");
 
-    if let Ok(command) = Command::parse(text, "Quorra") {
+    if let Ok(command) = Command::parse(text, "Josef") {
         response = match command {
             Command::Top => {
                 let str = cs.get_top()?;
@@ -54,7 +54,7 @@ pub async fn handle(
             match m.kind {
                 Common(ref common_msg) => {
                     if let Some(user) = &common_msg.from {
-                        if &user.id != sender_id && str_sender_id != &String::from("6685232640") {
+                        if &user.id != sender_id && str_sender_id != &String::from("6810171897") {
                             if m.text()
                                 .unwrap()
                                 .to_lowercase()
@@ -79,7 +79,7 @@ pub async fn handle(
                                 let recipient_last_name = &recipient.last_name.unwrap_or_else(|| String::from(""));
                                 let units: i32 = cs.get_units(str_sender_id)?;
                                 response = String::from(
-                                    format!("{} {} (@{}) ➡️ {} {} (@{})\nРепутация повышена: {}",
+                                    format!("{} {} (@{})\n{} {} (@{}) поблагодарил тебя\nДержи ⚙️\nТеперь у тебя их {}",
                                         &recipient_first_name,
                                         &recipient_last_name,
                                         &recipient_username,
