@@ -75,7 +75,8 @@ impl ChatServer {
                 last_name,
                 username
             ORDER BY
-                sum(units) DESC;")?;
+                sum(units) DESC
+            LIMIT 10;")?;
 
         let percents_iter = stmt.query_map([], |row| {
             Ok(Data { first_name: row.get(0)?, last_name: row.get(1)?, username: row.get(2)?, units: row.get(3)? })
@@ -83,7 +84,7 @@ impl ChatServer {
 
         let perc_vec: Vec<Data> = percents_iter.map(|d| { d.unwrap() }).collect();
 
-        let mut message = String::from("");
+        let mut message = String::from("⚙️ Рейтинг ⚙️\n");
         for (index, data) in perc_vec.iter().enumerate() {
             if index == 0 {
                 message.push_str("🥇 ");
