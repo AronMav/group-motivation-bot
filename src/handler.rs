@@ -5,7 +5,7 @@ use teloxide::{
     utils::command::BotCommands,
 };
 
-use crate::chat_server::ChatServer;
+use crate::chat_server::{ChatServer, UserData};
 
 #[derive(BotCommands, PartialEq, Debug)]
 #[command(rename_rule = "lowercase")]
@@ -17,8 +17,7 @@ pub async fn handle(
     bot: Bot,
     m: Message,
     cs: Arc<ChatServer>
-)
-    -> Result<(), Box<dyn Error + Send + Sync>> 
+) -> Result<(), Box<dyn Error + Send + Sync>>
 {
     let chat_id = m.chat.id.0;
     
@@ -35,7 +34,7 @@ pub async fn handle(
 
     let mut response = String::from("");
 
-    if let Ok(command) = Command::parse(text, "Josef") {
+    if let Ok(command) = Command::parse(text, "Quorra") {
         response = match command {
             Command::Top => {
                 let str = cs.get_top()?;
@@ -48,46 +47,28 @@ pub async fn handle(
 
         if reply != Option::None {
 
-            let sender = reply.unwrap().from().unwrap().clone();
-            let sender_id = &sender.id;
-            let str_sender_id = &sender_id.to_string();
+            let user = reply.unwrap().from().unwrap().clone();
+            let sender = UserData::new(user);
+
+            let str_sender_id = &sender.id.to_string();
             match m.kind {
                 Common(ref common_msg) => {
                     if let Some(user) = &common_msg.from {
-                        if &user.id != sender_id && str_sender_id != &String::from("6810171897") {
+                        if &user.id != &sender.id && str_sender_id != &String::from("6810171897") {
                             if m.text()
                                 .unwrap()
                                 .to_lowercase()
                                 .contains("спасибо") {
 
-                                //todo: обернуть в структуру
-                                let sender_username = &sender.username.unwrap_or_else(|| String::from(""));
-                                let sender_first_name= &sender.first_name;
-                                let sender_last_name = &sender.last_name.unwrap_or_else(|| String::from(""));
-
                                 cs.store_units(
-                                    str_sender_id,
-                                    sender_username,
-                                    sender_first_name,
-                                    sender_last_name,
+                                    &sender,
                                 )?;
 
-                                //todo: обернуть в структуру
-                                let recipient = m.from().unwrap().clone();
-                                let recipient_username = &recipient.username.unwrap_or_else(|| String::from(""));
-                                let recipient_first_name= &recipient.first_name;
-                                let recipient_last_name = &recipient.last_name.unwrap_or_else(|| String::from(""));
+                                let user = m.from().unwrap().clone();
+                                let recipient = UserData::new(user);
+
                                 let units: i32 = cs.get_units(str_sender_id)?;
-                                response = String::from(
-                                    format!("{} {} (@{})\n{} {} (@{}) поблагодарил тебя\nДержи ⚙️\nТеперь у тебя их {}",
-                                        &recipient_first_name,
-                                        &recipient_last_name,
-                                        &recipient_username,
-                                        &sender_first_name,
-                                        &sender_last_name,
-                                        &sender_username,
-                                        units)
-                                );
+                                response = cs.get_unit_addition_message(&sender, &recipient, units)?;
                             }
                         }
                     }

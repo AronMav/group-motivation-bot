@@ -1,5 +1,7 @@
 use std::sync::{Arc, Mutex};
 use rusqlite::{Connection, params, Result};
+use teloxide::prelude::UserId;
+use teloxide::types::User;
 
 use crate::db::get_db;
 
@@ -17,6 +19,25 @@ struct Data {
     units: f32,
 }
 
+#[derive(Debug)]
+pub struct UserData {
+    pub id: UserId,
+    username: String,
+    first_name: String,
+    last_name: String,
+}
+
+impl UserData {
+    pub fn new(user: User) -> UserData {
+        UserData {
+            id: user.id,
+            username : user.username.unwrap_or_else(|| String::from("")),
+            first_name: user.first_name,
+            last_name: user.last_name.unwrap_or_else(|| String::from("")),
+        }
+    }
+}
+
 impl ChatServer {
     pub fn new(db_path: String) -> Self {
         let conn = get_db(Some(db_path.as_str())).unwrap();
@@ -26,12 +47,8 @@ impl ChatServer {
         }
     }
 
-    pub fn store_units(&self,
-                       user_id: &str,
-                       username: &String,
-                       first_name: &String,
-                       last_name: &String,
-    ) -> Result<()> {
+    pub fn store_units(&self, user: &UserData) -> Result<()> {
+        let user_id = user.id.to_string();
         let lock = self.database.lock().unwrap();
         let mut stmt = lock.prepare("
             INSERT INTO users (id, units, username, first_name, last_name)
@@ -39,7 +56,7 @@ impl ChatServer {
             ON CONFLICT (id) DO
             UPDATE SET units = units + 1;")?;
 
-        stmt.execute(params![user_id, username, first_name, last_name])?;
+        stmt.execute(params![user_id, user.username, user.first_name, user.last_name])?;
 
         Ok(())
     }
@@ -78,14 +95,14 @@ impl ChatServer {
                 sum(units) DESC
             LIMIT 10;")?;
 
-        let percents_iter = stmt.query_map([], |row| {
+        let units_iter = stmt.query_map([], |row| {
             Ok(Data { first_name: row.get(0)?, last_name: row.get(1)?, username: row.get(2)?, units: row.get(3)? })
         }).unwrap();
 
-        let perc_vec: Vec<Data> = percents_iter.map(|d| { d.unwrap() }).collect();
+        let units_vec: Vec<Data> = units_iter.map(|d| { d.unwrap() }).collect();
 
         let mut message = String::from("⚙️ Рейтинг ⚙️\n");
-        for (index, data) in perc_vec.iter().enumerate() {
+        for (index, data) in units_vec.iter().enumerate() {
             if index == 0 {
                 message.push_str("🥇 ");
             } else if index == 1 {
@@ -98,6 +115,22 @@ impl ChatServer {
 
             message.push_str(format!("{} - {} {} (@{})\n", data.units, data.first_name, data.last_name, data.username).as_str());
         }
+
+        Ok(message)
+    }
+
+    pub fn get_unit_addition_message(&self, sender: &UserData, recipient: &UserData, units: i32) -> Result<String> {
+
+        let message = String::from(
+            format!("{} {} (@{})\n{} {} (@{}) поблагодарил тебя\nДержи ⚙️\nТеперь у тебя их {}",
+                    sender.first_name,
+                    sender.last_name,
+                    sender.username,
+                    recipient.first_name,
+                    recipient.last_name,
+                    recipient.username,
+                    units)
+        );
 
         Ok(message)
     }
