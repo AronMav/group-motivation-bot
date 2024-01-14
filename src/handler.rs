@@ -4,6 +4,7 @@ use teloxide::{
     types::MessageKind::Common,
     utils::command::BotCommands,
 };
+use std::env::var;
 
 use crate::chat_server::{ChatServer, UserData};
 
@@ -34,7 +35,7 @@ pub async fn handle(
 
     let mut response = String::from("");
 
-    if let Ok(command) = Command::parse(text, "Quorra") {
+    if let Ok(command) = Command::parse(text, var("BOT_NAME")?.as_str()) {
         response = match command {
             Command::Top => {
                 let str = cs.get_top()?;
@@ -54,7 +55,7 @@ pub async fn handle(
             match m.kind {
                 Common(ref common_msg) => {
                     if let Some(user) = &common_msg.from {
-                        if &user.id != &sender.id && str_sender_id != &String::from("6810171897") {
+                        if &user.id != &sender.id && str_sender_id != &var("BOT_ID")? {
                             if m.text()
                                 .unwrap()
                                 .to_lowercase()
