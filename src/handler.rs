@@ -59,7 +59,7 @@ pub async fn handle(
                             if m.text()
                                 .unwrap()
                                 .to_lowercase()
-                                .contains("спасибо") {
+                                .contains(var("KEY_WORD")?.as_str()) {
 
                                 cs.store_units(
                                     &sender,
