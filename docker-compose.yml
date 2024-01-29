@@ -1,0 +1,17 @@
+version: '3'
+services:
+  group-motivation-bot:
+    restart: on-failure
+    image: aronmav/group-motivation-bot:latest
+    container_name: group-motivation-bot
+    environment:
+      - BOT_ID=${BOT_ID}
+      - BOT_NAME=${BOT_NAME}
+      - DB_PATH=${DB_PATH}
+      - KEY_WORD=${KEY_WORD}
+      - LOG_PATH=${LOG_PATH}
+      - TELOXIDE_TOKEN=${TELOXIDE_TOKEN}
+    volumes:
+      - group-motivation-bot_data:/usr/local/bin/
+volumes:
+  group-motivation-bot_data:
