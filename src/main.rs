@@ -20,7 +20,7 @@ async fn main() {
 }
 
 async fn run() {
-    log::info!("Starting group-activity-bot");
+    log::info!("Starting group-motivation-bot");
 
     let bot = Bot::from_env();
     let db_path = var("DB_PATH").unwrap();
