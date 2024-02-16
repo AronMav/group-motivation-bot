@@ -12,6 +12,7 @@ use crate::chat_server::{ChatServer, UserData};
 #[command(rename_rule = "lowercase")]
 enum Command {
     Top,
+    Reg,
 }
 
 pub async fn handle(
@@ -20,12 +21,6 @@ pub async fn handle(
     cs: Arc<ChatServer>
 ) -> Result<(), Box<dyn Error + Send + Sync>>
 {
-    let chat_id = m.chat.id.0;
-    
-    // Telegram uses negative numbers for groups' `chat_id`
-    if chat_id > 0 {
-        bot.send_message(m.chat.id, "Этот бот используется только в группах.").await?;
-    }
 
     let text =
         match m.text(){
@@ -41,15 +36,26 @@ pub async fn handle(
                 let str = cs.get_top()?;
                 str
             },
+            Command::Reg => {
+                let user = m.from().unwrap().clone();
+                let sender = UserData::get_new_user(user);
+                let str_sender_id = &sender.id.to_string();
+                let mut str = "Пользователь уже существует";
+                if !cs.user_exist(str_sender_id)? {
+                    cs.add_user(&sender)?;
+                    str = "Пользователь создан";
+                }
+
+                str.to_string()
+            },
         }
     } else {
 
         let reply = m.reply_to_message();
 
         if reply != Option::None {
-
             let user = reply.unwrap().from().unwrap().clone();
-            let sender = UserData::new(user);
+            let sender = UserData::get_new_user(user);
 
             let str_sender_id = &sender.id.to_string();
             match m.kind {
@@ -61,14 +67,14 @@ pub async fn handle(
                                 .to_lowercase()
                                 .contains(var("KEY_WORD")?.as_str()) {
 
-                                cs.store_units(
+                                cs.raise_units(
                                     &sender,
                                 )?;
 
                                 let user = m.from().unwrap().clone();
-                                let recipient = UserData::new(user);
+                                let recipient = UserData::get_new_user(user);
 
-                                let units: i32 = cs.get_units(str_sender_id)?;
+                                let units: i32 = cs.get_units_by_id(str_sender_id)?;
                                 response = cs.get_unit_addition_message(&sender, &recipient, units)?;
                             }
                         }
@@ -76,6 +82,25 @@ pub async fn handle(
                 }
                 _ => {}
             }
+        } else {
+
+            // let user = m.from().unwrap().clone();
+            // let _recipient = UserData::get_new_user(user);
+            //
+            // for word in text.split(" ") {
+            //     if word.contains("@") {
+            //         let username = word.replace("@","");
+            //         let sender: i32 = cs.get_user_by_username(&username)?;
+            //         // let sender = UserData::new_only_username(username);
+            //         //
+            //         // cs.raise_units(
+            //         //     &sender,
+            //         // )?;
+            //         //
+            //         // response = cs.get_unit_addition_message(&sender, &recipient, units)?;
+            //     }
+            // }
+
         }
     }
 

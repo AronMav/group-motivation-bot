@@ -28,7 +28,7 @@ pub struct UserData {
 }
 
 impl UserData {
-    pub fn new(user: User) -> UserData {
+    pub fn get_new_user(user: User) -> UserData {
         UserData {
             id: user.id,
             username : user.username.unwrap_or_else(|| String::from("")),
@@ -36,6 +36,21 @@ impl UserData {
             last_name: user.last_name.unwrap_or_else(|| String::from("")),
         }
     }
+
+    pub fn new_only_username(
+        id: UserId,
+        username: String,
+        first_name: String,
+        last_name: String) -> UserData {
+
+        UserData {
+            id,
+            username,
+            first_name,
+            last_name,
+        }
+    }
+
 }
 
 impl ChatServer {
@@ -47,7 +62,7 @@ impl ChatServer {
         }
     }
 
-    pub fn store_units(&self, user: &UserData) -> Result<()> {
+    pub fn raise_units(&self, user: &UserData) -> Result<()> {
         let user_id = user.id.to_string();
         let lock = self.database.lock().unwrap();
         let mut stmt = lock.prepare("
@@ -61,7 +76,19 @@ impl ChatServer {
         Ok(())
     }
 
-    pub fn get_units(&self, user_id: &String) -> Result<i32> {
+    pub fn add_user(&self, user: &UserData) -> Result<()> {
+        let user_id = user.id.to_string();
+        let lock = self.database.lock().unwrap();
+        let mut stmt = lock.prepare("
+            INSERT INTO users (id, units, username, first_name, last_name)
+            VALUES (?, 0, ?, ?, ?);")?;
+
+        stmt.execute(params![user_id, user.username, user.first_name, user.last_name])?;
+
+        Ok(())
+    }
+
+    pub fn get_units_by_id(&self, user_id: &String) -> Result<i32> {
         let lock = self.database.lock().unwrap();
         let mut stmt = lock.prepare(
             "SELECT units
@@ -77,6 +104,40 @@ impl ChatServer {
 
         Ok(units)
     }
+
+    pub fn user_exist(&self, user_id: &String) -> Result<bool> {
+        let lock = self.database.lock().unwrap();
+        let mut stmt = lock.prepare(
+            "SELECT units
+            from users
+            where id = ?;"
+        )?;
+
+        Ok(stmt.exists([user_id])?)
+    }
+
+    // pub fn get_user_by_username(&self, username: &String) -> Result<UserData> {
+    //     let lock = self.database.lock().unwrap();
+    //     let mut stmt = lock.prepare(
+    //         "SELECT
+    //                 id
+    //                 max(first_name) as first_name,
+    //                 max(last_name) as last_name,
+    //                 username,
+    //                 sum(units) as units
+    //             FROM users
+    //             GROUP BY
+    //                 id
+    //             WHERE username = ?;"
+    //     )?;
+    //
+    //     if stmt.exists([username])? {
+    //         stmt.query_row([username], |row| Ok(row.get(0)?)).unwrap();
+    //         user = UserData::new_only_username(username);
+    //     }
+    //
+    //     Ok(user)
+    // }
 
     pub fn get_top(&self) -> Result<String> {
         let lock = self.database.lock().unwrap();
