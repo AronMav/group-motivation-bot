@@ -12,7 +12,7 @@ use crate::chat_server::{ChatServer, UserData};
 #[command(rename_rule = "lowercase")]
 enum Command {
     Top,
-    Reg,
+    Registration,
 }
 
 pub async fn handle(
@@ -32,21 +32,29 @@ pub async fn handle(
 
     if let Ok(command) = Command::parse(text, var("BOT_NAME")?.as_str()) {
         response = match command {
-            Command::Top => {
-                let str = cs.get_top()?;
-                str
-            },
-            Command::Reg => {
+            Command::Registration => {
                 let user = m.from().unwrap().clone();
-                let sender = UserData::get_new_user(user);
-                let str_sender_id = &sender.id.to_string();
-                let mut str = "Пользователь уже существует";
-                if !cs.user_exist(str_sender_id)? {
-                    cs.add_user(&sender)?;
-                    str = "Пользователь создан";
+                let sender = UserData::get_new_user(&user);
+                let username = &sender.username.to_string();
+                let mut str =
+                    "Регистрация НЕ выполнена. \
+                    Необходимо установить в профиле Имя пользователя(Username). \
+                    При смене имени пользователя необходимо снова запустить команду регистрации.";
+                if !username.is_empty() {
+                    //Искать пользователя не по ID, а по username
+                    if !cs.user_exist(username)? {
+                        cs.add_user(&sender)?;
+                        str = "Регистрация прошла успешно";
+                    } else {
+                        str = "Вы уже зарегистрированны";
+                    }
                 }
 
                 str.to_string()
+            },
+            Command::Top => {
+                let str = cs.get_top()?;
+                str
             },
         }
     } else {
@@ -55,7 +63,7 @@ pub async fn handle(
 
         if reply != Option::None {
             let user = reply.unwrap().from().unwrap().clone();
-            let sender = UserData::get_new_user(user);
+            let sender = UserData::get_new_user(&user);
 
             let str_sender_id = &sender.id.to_string();
             match m.kind {
@@ -72,7 +80,7 @@ pub async fn handle(
                                 )?;
 
                                 let user = m.from().unwrap().clone();
-                                let recipient = UserData::get_new_user(user);
+                                let recipient = UserData::get_new_user(&user);
 
                                 let units: i32 = cs.get_units_by_id(str_sender_id)?;
                                 response = cs.get_unit_addition_message(&sender, &recipient, units)?;

@@ -22,34 +22,34 @@ struct Data {
 #[derive(Debug)]
 pub struct UserData {
     pub id: UserId,
-    username: String,
+    pub username: String,
     first_name: String,
     last_name: String,
 }
 
 impl UserData {
-    pub fn get_new_user(user: User) -> UserData {
+    pub fn get_new_user(user: &User) -> UserData {
         UserData {
             id: user.id,
-            username : user.username.unwrap_or_else(|| String::from("")),
-            first_name: user.first_name,
-            last_name: user.last_name.unwrap_or_else(|| String::from("")),
+            username : user.username.clone().unwrap_or_else(|| String::from("")),
+            first_name: user.first_name.clone(),
+            last_name: user.last_name.clone().unwrap_or_else(|| String::from("")),
         }
     }
 
-    pub fn new_only_username(
-        id: UserId,
-        username: String,
-        first_name: String,
-        last_name: String) -> UserData {
-
-        UserData {
-            id,
-            username,
-            first_name,
-            last_name,
-        }
-    }
+    // pub fn new_only_username(
+    //     id: UserId,
+    //     username: String,
+    //     first_name: String,
+    //     last_name: String) -> UserData {
+    //
+    //     UserData {
+    //         id,
+    //         username,
+    //         first_name,
+    //         last_name,
+    //     }
+    // }
 
 }
 
@@ -67,7 +67,7 @@ impl ChatServer {
         let lock = self.database.lock().unwrap();
         let mut stmt = lock.prepare("
             INSERT INTO users (id, units, username, first_name, last_name)
-            VALUES (?, 1, ?, ?, ?)
+            VALUES (?1, 1, ?2, ?3, ?4)
             ON CONFLICT (id) DO
             UPDATE SET units = units + 1;")?;
 
@@ -81,7 +81,9 @@ impl ChatServer {
         let lock = self.database.lock().unwrap();
         let mut stmt = lock.prepare("
             INSERT INTO users (id, units, username, first_name, last_name)
-            VALUES (?, 0, ?, ?, ?);")?;
+            VALUES (?1, 0, ?2, ?3, ?4)
+            ON CONFLICT (id) DO
+            UPDATE SET username = ?2, first_name = ?3, last_name = ?4")?;
 
         stmt.execute(params![user_id, user.username, user.first_name, user.last_name])?;
 
@@ -105,15 +107,15 @@ impl ChatServer {
         Ok(units)
     }
 
-    pub fn user_exist(&self, user_id: &String) -> Result<bool> {
+    pub fn user_exist(&self, username: &String) -> Result<bool> {
         let lock = self.database.lock().unwrap();
         let mut stmt = lock.prepare(
             "SELECT units
             from users
-            where id = ?;"
+            where username = ?;"
         )?;
 
-        Ok(stmt.exists([user_id])?)
+        Ok(stmt.exists([username])?)
     }
 
     // pub fn get_user_by_username(&self, username: &String) -> Result<UserData> {
