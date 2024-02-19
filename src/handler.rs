@@ -1,7 +1,6 @@
 use std::{error::Error, sync::Arc};
 use teloxide::{
     prelude::*,
-    types::MessageKind::Common,
     utils::command::BotCommands,
 };
 use std::env::var;
@@ -59,56 +58,53 @@ pub async fn handle(
         }
     } else {
 
-        let reply = m.reply_to_message();
+        if m.text()
+            .unwrap()
+            .to_lowercase()
+            .contains(var("KEY_WORD")?.as_str()) {
 
-        if reply != Option::None {
-            let user = reply.unwrap().from().unwrap().clone();
-            let sender = UserData::get_new_user(&user);
+            //let reply = m.reply_to_message();
 
-            let str_sender_id = &sender.id.to_string();
-            match m.kind {
-                Common(ref common_msg) => {
-                    if let Some(user) = &common_msg.from {
-                        if &user.id != &sender.id && str_sender_id != &var("BOT_ID")? {
-                            if m.text()
-                                .unwrap()
-                                .to_lowercase()
-                                .contains(var("KEY_WORD")?.as_str()) {
+            // if reply != Option::None {
+            //     let user = reply.unwrap().from().unwrap().clone();
+            //     let sender = UserData::get_new_user(&user);
+            //
+            //     let str_sender_id = &sender.id.to_string();
+            //     match m.kind {
+            //         Common(ref common_msg) => {
+            //             if let Some(user) = &common_msg.from {
+            //                 if &user.id != &sender.id && str_sender_id != &var("BOT_ID")? {
+            //
+            //                     cs.raise_units(
+            //                         &sender.username,
+            //                     )?;
+            //
+            //                     // let user = m.from().unwrap().clone();
+            //                     // let recipient = UserData::get_new_user(&user);
+            //                     //
+            //                     // let units: i32 = cs.get_units_by_id(str_sender_id)?;
+            //                     // response = cs.get_unit_addition_message(&sender, &recipient, units)?;
+            //
+            //                 }
+            //             }
+            //         }
+            //         _ => {}
+            //     }
+            // } else {
 
-                                cs.raise_units(
-                                    &sender,
-                                )?;
-
-                                let user = m.from().unwrap().clone();
-                                let recipient = UserData::get_new_user(&user);
-
-                                let units: i32 = cs.get_units_by_id(str_sender_id)?;
-                                response = cs.get_unit_addition_message(&sender, &recipient, units)?;
-                            }
-                        }
+            let sender = m.from().unwrap().clone();
+            let username_sender = sender.username.clone().unwrap_or_else(|| String::from(""));
+            for word in text.split(" ") {
+                if word.contains("@") {
+                    let username = word.replace("@", "");
+                    if &username != &username_sender
+                        && &username != &var("BOT_USERNAME")? {
+                        cs.raise_units(
+                            &username,
+                        )?;
                     }
                 }
-                _ => {}
             }
-        } else {
-
-            // let user = m.from().unwrap().clone();
-            // let _recipient = UserData::get_new_user(user);
-            //
-            // for word in text.split(" ") {
-            //     if word.contains("@") {
-            //         let username = word.replace("@","");
-            //         let sender: i32 = cs.get_user_by_username(&username)?;
-            //         // let sender = UserData::new_only_username(username);
-            //         //
-            //         // cs.raise_units(
-            //         //     &sender,
-            //         // )?;
-            //         //
-            //         // response = cs.get_unit_addition_message(&sender, &recipient, units)?;
-            //     }
-            // }
-
         }
     }
 

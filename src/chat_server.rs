@@ -37,20 +37,6 @@ impl UserData {
         }
     }
 
-    // pub fn new_only_username(
-    //     id: UserId,
-    //     username: String,
-    //     first_name: String,
-    //     last_name: String) -> UserData {
-    //
-    //     UserData {
-    //         id,
-    //         username,
-    //         first_name,
-    //         last_name,
-    //     }
-    // }
-
 }
 
 impl ChatServer {
@@ -62,16 +48,14 @@ impl ChatServer {
         }
     }
 
-    pub fn raise_units(&self, user: &UserData) -> Result<()> {
-        let user_id = user.id.to_string();
+    pub fn raise_units(&self, username: &String) -> Result<()> {
         let lock = self.database.lock().unwrap();
         let mut stmt = lock.prepare("
-            INSERT INTO users (id, units, username, first_name, last_name)
-            VALUES (?1, 1, ?2, ?3, ?4)
-            ON CONFLICT (id) DO
-            UPDATE SET units = units + 1;")?;
+            UPDATE users
+            SET units = units + 1
+            WHERE username = ?1;")?;
 
-        stmt.execute(params![user_id, user.username, user.first_name, user.last_name])?;
+        stmt.execute(params![username])?;
 
         Ok(())
     }
@@ -90,23 +74,6 @@ impl ChatServer {
         Ok(())
     }
 
-    pub fn get_units_by_id(&self, user_id: &String) -> Result<i32> {
-        let lock = self.database.lock().unwrap();
-        let mut stmt = lock.prepare(
-            "SELECT units
-            from users
-            where id = ?;"
-        )?;
-
-        let mut units = 0;
-
-        if stmt.exists([user_id])? {
-            units = stmt.query_row([user_id], |row| Ok(row.get(0)?)).unwrap();
-        }
-
-        Ok(units)
-    }
-
     pub fn user_exist(&self, username: &String) -> Result<bool> {
         let lock = self.database.lock().unwrap();
         let mut stmt = lock.prepare(
@@ -117,29 +84,6 @@ impl ChatServer {
 
         Ok(stmt.exists([username])?)
     }
-
-    // pub fn get_user_by_username(&self, username: &String) -> Result<UserData> {
-    //     let lock = self.database.lock().unwrap();
-    //     let mut stmt = lock.prepare(
-    //         "SELECT
-    //                 id
-    //                 max(first_name) as first_name,
-    //                 max(last_name) as last_name,
-    //                 username,
-    //                 sum(units) as units
-    //             FROM users
-    //             GROUP BY
-    //                 id
-    //             WHERE username = ?;"
-    //     )?;
-    //
-    //     if stmt.exists([username])? {
-    //         stmt.query_row([username], |row| Ok(row.get(0)?)).unwrap();
-    //         user = UserData::new_only_username(username);
-    //     }
-    //
-    //     Ok(user)
-    // }
 
     pub fn get_top(&self) -> Result<String> {
         let lock = self.database.lock().unwrap();
@@ -182,19 +126,19 @@ impl ChatServer {
         Ok(message)
     }
 
-    pub fn get_unit_addition_message(&self, sender: &UserData, recipient: &UserData, units: i32) -> Result<String> {
-
-        let message = String::from(
-            format!("{} {} (@{})\n{} {} (@{}) поблагодарил тебя\nДержи ⚙️\nТеперь у тебя их {}",
-                    sender.first_name,
-                    sender.last_name,
-                    sender.username,
-                    recipient.first_name,
-                    recipient.last_name,
-                    recipient.username,
-                    units)
-        );
-
-        Ok(message)
-    }
+    // pub fn get_unit_addition_message(&self, sender: &UserData, recipient: &UserData, units: i32) -> Result<String> {
+    //
+    //     let message = String::from(
+    //         format!("{} {} (@{})\n{} {} (@{}) поблагодарил тебя\nДержи ⚙️\nТеперь у тебя их {}",
+    //                 sender.first_name,
+    //                 sender.last_name,
+    //                 sender.username,
+    //                 recipient.first_name,
+    //                 recipient.last_name,
+    //                 recipient.username,
+    //                 units)
+    //     );
+    //
+    //     Ok(message)
+    // }
 }
