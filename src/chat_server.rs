@@ -61,7 +61,7 @@ impl ChatServer {
     }
 
     pub fn add_user(&self, user: &UserData) -> Result<()> {
-        let user_id = user.id.to_string();
+        let user_id:u64 = user.id.0;
         let lock = self.database.lock().unwrap();
         let mut stmt = lock.prepare("
             INSERT INTO users (id, units, username, first_name, last_name)
@@ -72,6 +72,19 @@ impl ChatServer {
         stmt.execute(params![user_id, user.username, user.first_name, user.last_name])?;
 
         Ok(())
+    }
+
+
+    pub fn get_id_by_username(&self, username: &String) -> Result<u64> {
+        let lock = self.database.lock().unwrap();
+        let mut stmt = lock.prepare(
+            "SELECT id
+            FROM users
+            WHERE username = ?;"
+        )?;
+        let id = stmt.query_row([username], |row| Ok(row.get(0)?))?;
+
+        Ok(id)
     }
 
     pub fn user_exist(&self, username: &String) -> Result<bool> {
@@ -104,7 +117,7 @@ impl ChatServer {
 
         let units_iter = stmt.query_map([], |row| {
             Ok(Data { first_name: row.get(0)?, last_name: row.get(1)?, username: row.get(2)?, units: row.get(3)? })
-        }).unwrap();
+        })?;
 
         let units_vec: Vec<Data> = units_iter.map(|d| { d.unwrap() }).collect();
 

@@ -17,7 +17,7 @@ pub fn get_db(path: Option<&str>) -> Result<Connection> {
 fn run_migrations(conn: &Connection) -> Result<()> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS users (
-            id	        STRING,
+            id	        INTEGER,
             username    STRING,
             first_name	STRING,
             last_name	STRING,

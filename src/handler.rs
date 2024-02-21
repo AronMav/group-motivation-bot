@@ -99,9 +99,11 @@ pub async fn handle(
                     let username = word.replace("@", "");
                     if &username != &username_sender
                         && &username != &var("BOT_USERNAME")? {
-                        cs.raise_units(
-                            &username,
-                        )?;
+                        cs.raise_units(&username)?;
+                        response = String::from("⚙️ Переданы");
+
+                        let id= cs.get_id_by_username(&username)?;
+                        bot.send_message(UserId(id), String::from("⚙️ Получены")).await?;
                     }
                 }
             }
