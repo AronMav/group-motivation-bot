@@ -28,12 +28,12 @@ pub struct UserData {
 }
 
 impl UserData {
-    pub fn get_new_user(user: &User) -> UserData {
+    pub fn get_new_user(user: User) -> UserData {
         UserData {
             id: user.id,
-            username : user.username.clone().unwrap_or_else(|| String::from("")),
-            first_name: user.first_name.clone(),
-            last_name: user.last_name.clone().unwrap_or_else(|| String::from("")),
+            username : user.username.unwrap_or_else(|| String::from("")),
+            first_name: user.first_name,
+            last_name: user.last_name.unwrap_or_else(|| String::from("")),
         }
     }
 
@@ -121,7 +121,7 @@ impl ChatServer {
 
         let units_vec: Vec<Data> = units_iter.map(|d| { d.unwrap() }).collect();
 
-        let mut message = String::from("⚙️ Рейтинг ⚙️\n");
+        let mut message = String::from("*Рейтинг*\n");
         for (index, data) in units_vec.iter().enumerate() {
             if index == 0 {
                 message.push_str("🥇 ");
@@ -133,7 +133,7 @@ impl ChatServer {
                 message.push_str("       ");
             }
 
-            message.push_str(format!("{} - {} {} (@{})\n", data.units, data.first_name, data.last_name, data.username).as_str());
+            message.push_str(format!("{} \\- {} {} \\(@{}\\)\n", data.units, data.first_name, data.last_name, data.username).as_str());
         }
 
         Ok(message)

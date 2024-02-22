@@ -2,6 +2,9 @@ use std::{error::Error, sync::Arc};
 use teloxide::{
     prelude::*,
     utils::command::BotCommands,
+    types::{
+        ParseMode,
+    },
 };
 use std::env::var;
 
@@ -33,12 +36,12 @@ pub async fn handle(
         response = match command {
             Command::Registration => {
                 let user = m.from().unwrap().clone();
-                let sender = UserData::get_new_user(&user);
+                let sender = UserData::get_new_user(user.clone());
                 let username = &sender.username.to_string();
                 let mut str =
-                    "Регистрация НЕ выполнена. \
-                    Необходимо установить в профиле Имя пользователя(Username). \
-                    При смене имени пользователя необходимо снова запустить команду регистрации.";
+                    "*Регистрация НЕ выполнена*\\.\n\
+                    Необходимо установить в профиле Имя пользователя\\(Username\\)\\.\n\
+                    При смене имени пользователя необходимо снова запустить команду регистрации\\.";
                 if !username.is_empty() {
                     //Искать пользователя не по ID, а по username
                     if !cs.user_exist(username)? {
@@ -61,49 +64,21 @@ pub async fn handle(
         if m.text()
             .unwrap()
             .to_lowercase()
-            .contains(var("KEY_WORD")?.as_str()) {
-
-            //let reply = m.reply_to_message();
-
-            // if reply != Option::None {
-            //     let user = reply.unwrap().from().unwrap().clone();
-            //     let sender = UserData::get_new_user(&user);
-            //
-            //     let str_sender_id = &sender.id.to_string();
-            //     match m.kind {
-            //         Common(ref common_msg) => {
-            //             if let Some(user) = &common_msg.from {
-            //                 if &user.id != &sender.id && str_sender_id != &var("BOT_ID")? {
-            //
-            //                     cs.raise_units(
-            //                         &sender.username,
-            //                     )?;
-            //
-            //                     // let user = m.from().unwrap().clone();
-            //                     // let recipient = UserData::get_new_user(&user);
-            //                     //
-            //                     // let units: i32 = cs.get_units_by_id(str_sender_id)?;
-            //                     // response = cs.get_unit_addition_message(&sender, &recipient, units)?;
-            //
-            //                 }
-            //             }
-            //         }
-            //         _ => {}
-            //     }
-            // } else {
+            .contains(var("KEY_WORD")?.as_str())
+        {
 
             let sender = m.from().unwrap().clone();
-            let username_sender = sender.username.clone().unwrap_or_else(|| String::from(""));
+            let sender_username = sender.username.unwrap_or_else(|| String::from(""));
             for word in text.split(" ") {
                 if word.contains("@") {
                     let username = word.replace("@", "");
-                    if &username != &username_sender
+                    if &username != &sender_username
                         && &username != &var("BOT_USERNAME")? {
                         cs.raise_units(&username)?;
-                        response = String::from("⚙️ Переданы");
+                        response = format!("@{} получил {}", &username, var("COIN")?.as_str());
 
                         let id= cs.get_id_by_username(&username)?;
-                        bot.send_message(UserId(id), String::from("⚙️ Получены")).await?;
+                        bot.send_message(UserId(id), format!("Вам передали {} от @{}", var("COIN")?.as_str(), &sender_username)).await?;
                     }
                 }
             }
@@ -111,7 +86,7 @@ pub async fn handle(
     }
 
     if !response.is_empty() {
-        bot.send_message(m.chat.id, response).await?;
+        bot.send_message(m.chat.id, response).parse_mode(ParseMode::MarkdownV2).await?;
     }
 
     Ok(())
