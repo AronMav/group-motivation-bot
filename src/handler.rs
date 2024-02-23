@@ -6,7 +6,6 @@ use teloxide::{
         ParseMode,
     },
 };
-use std::env::var;
 
 use crate::chat_server::{ChatServer, UserData};
 
@@ -32,7 +31,7 @@ pub async fn handle(
 
     let mut response = String::from("");
 
-    if let Ok(command) = Command::parse(text, var("BOT_NAME")?.as_str()) {
+    if let Ok(command) = Command::parse(text, cs.bot_name.as_str()) {
         response = match command {
             Command::Registration => {
                 let user = m.from().unwrap().clone();
@@ -64,7 +63,7 @@ pub async fn handle(
         if m.text()
             .unwrap()
             .to_lowercase()
-            .contains(var("KEY_WORD")?.as_str())
+            .contains(cs.key_word.as_str())
         {
 
             let sender = m.from().unwrap().clone();
@@ -73,12 +72,12 @@ pub async fn handle(
                 if word.contains("@") {
                     let username = word.replace("@", "");
                     if &username != &sender_username
-                        && &username != &var("BOT_USERNAME")? {
+                        && &username != cs.bot_username.as_str() {
                         cs.raise_units(&username)?;
-                        response = format!("@{} получил {}", &username, var("COIN")?.as_str());
+                        response = format!("@{} получил {}", &username, cs.coin);
 
                         let id= cs.get_id_by_username(&username)?;
-                        bot.send_message(UserId(id), format!("Вам передали {} от @{}", var("COIN")?.as_str(), &sender_username)).await?;
+                        bot.send_message(UserId(id), format!("Вам передали {} от @{}", cs.coin, &sender_username)).await?;
                     }
                 }
             }

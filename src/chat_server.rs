@@ -8,7 +8,11 @@ use crate::db::get_db;
 
 #[derive(Debug)]
 pub struct ChatServer {
-    pub database: Arc<Mutex<Connection>>
+    pub database: Arc<Mutex<Connection>>,
+    pub bot_name: String,
+    pub bot_username: String,
+    pub coin: String,
+    pub key_word: String
 }
 
 #[derive(Debug, PartialEq)]
@@ -40,11 +44,20 @@ impl UserData {
 }
 
 impl ChatServer {
-    pub fn new(db_path: String) -> Self {
+
+    pub fn new(db_path: String,
+               bot_name: String,
+               bot_username: String,
+               coin: String,
+               key_word: String) -> Self {
         let conn = get_db(Some(db_path.as_str())).unwrap();
 
         ChatServer {
-            database: Arc::new(Mutex::new(conn))
+            database: Arc::new(Mutex::new(conn)),
+            bot_name,
+            bot_username,
+            coin,
+            key_word
         }
     }
 
