@@ -27,6 +27,7 @@ async fn run() {
     let bot_username = var("BOT_USERNAME").expect("$BOT_USERNAME is not set");
     let coin = var("COIN").expect("$COIN is not set");
     let key_word = var("KEY_WORD").expect("$KEY_WORD is not set");
+    let max_by_day_coins:i32 = var("MAX_BY_DAY_COINS").expect("$MAX_BY_DAY_COINS is not set").parse().unwrap();
     let chat_server = Arc::new(
         ChatServer::new(
             db_path,
@@ -34,6 +35,7 @@ async fn run() {
             bot_username,
             coin,
             key_word,
+            max_by_day_coins
         )
     );
 

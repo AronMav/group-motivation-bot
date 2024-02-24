@@ -19,12 +19,14 @@ fn run_migrations(conn: &Connection) -> Result<()> {
         "CREATE TABLE IF NOT EXISTS users (
             id	        INTEGER,
             username    STRING,
-            first_name	STRING,
-            last_name	STRING,
-            units	INTEGER NOT NULL DEFAULT 0,
+            firstName	STRING,
+            lastName	STRING,
+            currentDate STRING NOT NULL DEFAULT '0001-01-01',
+            coinsPerDay INTEGER NOT NULL DEFAULT 0,
+            coins	    INTEGER NOT NULL DEFAULT 0,
             PRIMARY KEY(id));
             CREATE TABLE IF NOT EXISTS questions (
-            message_id INTEGER NOT NULL,
+            messageId INTEGER NOT NULL,
             resolved BOOLEAN NOT NULL DEFAULT False);",
         [],
     )?;

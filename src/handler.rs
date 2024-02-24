@@ -6,7 +6,8 @@ use teloxide::{
         ParseMode,
     },
 };
-
+use chrono::{Datelike, Utc, NaiveDate};
+use chrono::format::strftime::StrftimeItems;
 use crate::chat_server::{ChatServer, UserData};
 
 #[derive(BotCommands, PartialEq, Debug)]
@@ -73,11 +74,24 @@ pub async fn handle(
                     let username = word.replace("@", "");
                     if &username != &sender_username
                         && &username != cs.bot_username.as_str() {
-                        cs.raise_units(&username)?;
-                        response = format!("@{} получил {}", &username, cs.coin);
+                        let now = Utc::now();
+                        let mut limitation_data = cs.get_coins_per_day(&username)?;
+                        let date = NaiveDate::from_ymd_opt(now.year(), now.month(), now.day()).unwrap();
+                        let current_date = date.format_with_items(StrftimeItems::new("%Y-%m-%d")).to_string();
+                        
+                        if limitation_data.current_date != current_date {
+                            cs.reset_limits(&username, &current_date)?;
+                            limitation_data.coins_per_day = 0;
+                        }
 
-                        let id= cs.get_id_by_username(&username)?;
-                        bot.send_message(UserId(id), format!("Вам передали {} от @{}", cs.coin, &sender_username)).await?;
+                        if limitation_data.coins_per_day < cs.max_by_day_coins {
+                            cs.increase_coin_count(&username)?;
+                            response = format!("@{} получил {}", &username, cs.coin);
+                            let id= cs.get_id_by_username(&username)?;
+                            bot.send_message(UserId(id), format!("Вам передали {} от @{}", cs.coin, &sender_username)).await?;
+                        } else {
+                            response = format!("Вы привысили максимальное количество {} в день", cs.coin);
+                        }
                     }
                 }
             }
