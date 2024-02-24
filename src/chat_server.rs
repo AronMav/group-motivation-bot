@@ -91,7 +91,7 @@ impl ChatServer {
             WHERE username = ?1;")?;
 
         stmt.execute(params![username])?;
-        
+
         Ok(())
     }
 
@@ -142,7 +142,6 @@ impl ChatServer {
             from users
             where username = ?;"
         )?;
-
         Ok(stmt.exists([username])?)
     }
 
