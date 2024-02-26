@@ -11,10 +11,15 @@ use chrono::format::strftime::StrftimeItems;
 use crate::chat_server::{ChatServer, UserData};
 
 #[derive(BotCommands, PartialEq, Debug)]
-#[command(rename_rule = "lowercase")]
+#[command(rename_rule = "lowercase", description = "*Описание команд*")]
 enum Command {
+    #[command(description = "Описание")]
+    Start,
+    #[command(description = "Активация бота\\.\
+    \n`/registration \\<Ключ активации\\>`")]
+    Registration(String),
+    #[command(description = "Топ")]
     Top,
-    Registration,
 }
 
 pub async fn handle(
@@ -34,23 +39,31 @@ pub async fn handle(
 
     if let Ok(command) = Command::parse(text, cs.bot_name.as_str()) {
         response = match command {
-            Command::Registration => {
-                let user = m.from().unwrap().clone();
-                let sender = UserData::get_new_user(user.clone());
-                let username = &sender.username.to_string();
-                let mut str =
+            Command::Start => {
+                let str =  Command::descriptions().to_string();
+                str
+            },
+            Command::Registration(key) => {
+                let mut str = 
                     "*Регистрация НЕ выполнена*\\.\n\
+                Ключ задан неверно";
+                if key == cs.registration_key {
+                    let user = m.from().unwrap().clone();
+                    let sender = UserData::get_new_user(user.clone());
+                    let username = &sender.username.to_string();
+                    str =
+                        "*Регистрация НЕ выполнена*\\.\n\
                     Необходимо установить в профиле Имя пользователя\\(Username\\)\\.\n\
                     При смене имени пользователя необходимо снова запустить команду регистрации\\.";
-                if !username.is_empty() {
-                    if !cs.user_exist(username)? {
-                        cs.add_user(&sender)?;
-                        str = "Регистрация прошла успешно";
-                    } else {
-                        str = "Вы уже зарегистрированны";
+                    if !username.is_empty() {
+                        if !cs.user_exist(username)? {
+                            cs.add_user(&sender)?;
+                            str = "Регистрация прошла успешно";
+                        } else {
+                            str = "Вы уже зарегистрированны";
+                        }
                     }
-                }
-
+                } 
                 str.to_string()
             },
             Command::Top => {
@@ -65,7 +78,6 @@ pub async fn handle(
             .to_lowercase()
             .contains(cs.key_word.as_str())
         {
-
             let sender = m.from().unwrap().clone();
             let sender_username = sender.username.unwrap_or_else(|| String::from(""));
             if cs.user_exist(&sender_username)? {

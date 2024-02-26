@@ -7,6 +7,7 @@ use crate::db::get_db;
 #[derive(Debug)]
 pub struct ChatServer {
     pub database: Arc<Mutex<Connection>>,
+    pub registration_key: String,
     pub bot_name: String,
     pub bot_username: String,
     pub coin: String,
@@ -50,6 +51,7 @@ impl UserData {
 impl ChatServer {
 
     pub fn new(db_path: String,
+               registration_key: String,
                bot_name: String,
                bot_username: String,
                coin: String,
@@ -59,6 +61,7 @@ impl ChatServer {
 
         ChatServer {
             database: Arc::new(Mutex::new(conn)),
+            registration_key,
             bot_name,
             bot_username,
             coin,

@@ -23,6 +23,7 @@ async fn run() {
 
     let bot = Bot::from_env();
     let db_path = var("DB_PATH").expect("$DB_PATH is not set");
+    let registration_key = var("REGISTRATION_KEY").expect("$REGISTRATION_KEYis not set");
     let bot_name = var("BOT_NAME").expect("$BOT_NAME is not set");
     let bot_username = var("BOT_USERNAME").expect("$BOT_USERNAME is not set");
     let coin = var("COIN").expect("$COIN is not set");
@@ -31,6 +32,7 @@ async fn run() {
     let chat_server = Arc::new(
         ChatServer::new(
             db_path,
+            registration_key,
             bot_name,
             bot_username,
             coin,
