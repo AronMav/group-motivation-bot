@@ -5,12 +5,15 @@ services:
     image: aronmav/group-motivation-bot:latest
     container_name: group-motivation-bot
     environment:
-      - BOT_ID=${BOT_ID}
       - BOT_NAME=${BOT_NAME}
+      - BOT_USERNAME=${BOT_USERNAME}
       - DB_PATH=${DB_PATH}
       - KEY_WORD=${KEY_WORD}
       - LOG_PATH=${LOG_PATH}
       - TELOXIDE_TOKEN=${TELOXIDE_TOKEN}
+      - COIN=${COIN}
+      - MAX_BY_DAY_COINS=${MAX_BY_DAY_COINS}
+      - REGISTRATION_KEY=${REGISTRATION_KEY}
     volumes:
       - group-motivation-bot_data:/usr/local/bin/
 volumes:
