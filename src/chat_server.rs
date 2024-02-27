@@ -89,8 +89,19 @@ impl ChatServer {
         let lock = self.database.lock().unwrap();
         let mut stmt = lock.prepare("
             UPDATE users
-            SET coins = coins + 1,
-                coinsPerDay = coinsPerDay + 1
+            SET coins = coins + 1
+            WHERE username = ?1;")?;
+
+        stmt.execute(params![username])?;
+
+        Ok(())
+    }
+
+    pub fn increase_coin_per_day_count(&self, username: &String) -> Result<()> {
+        let lock = self.database.lock().unwrap();
+        let mut stmt = lock.prepare("
+            UPDATE users
+            SET coinsPerDay = coinsPerDay + 1
             WHERE username = ?1;")?;
 
         stmt.execute(params![username])?;
@@ -115,8 +126,8 @@ impl ChatServer {
         let user_id:u64 = user.id.0;
         let lock = self.database.lock().unwrap();
         let mut stmt = lock.prepare("
-            INSERT INTO users (id, coins, username, firstName, lastName)
-            VALUES (?1, 0, ?2, ?3, ?4)
+            INSERT INTO users (id, coins, username, firstName, lastName, currentDate)
+            VALUES (?1, 0, ?2, ?3, ?4, DATE('now'))
             ON CONFLICT (id) DO
             UPDATE SET username = ?2, firstName = ?3, lastName = ?4")?;
 

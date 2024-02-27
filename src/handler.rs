@@ -16,8 +16,8 @@ enum Command {
     #[command(description = "Описание")]
     Start,
     #[command(description = "Активация бота\\.\
-    \n`/registration \\<Ключ активации\\>`")]
-    Registration(String),
+    \n`/reg \\<Ключ активации\\>`")]
+    Reg(String),
     #[command(description = "Топ")]
     Top,
 }
@@ -43,16 +43,14 @@ pub async fn handle(
                 let str =  Command::descriptions().to_string();
                 str
             },
-            Command::Registration(key) => {
-                let mut str = 
-                    "*Регистрация НЕ выполнена*\\.\n\
+            Command::Reg(key) => {
+                let mut str = "*Регистрация НЕ выполнена*\\.\n\
                 Ключ задан неверно";
                 if key == cs.registration_key {
                     let user = m.from().unwrap().clone();
                     let sender = UserData::get_new_user(user.clone());
                     let username = &sender.username.to_string();
-                    str =
-                        "*Регистрация НЕ выполнена*\\.\n\
+                    str = "*Регистрация НЕ выполнена*\\.\n\
                     Необходимо установить в профиле Имя пользователя\\(Username\\)\\.\n\
                     При смене имени пользователя необходимо снова запустить команду регистрации\\.";
                     if !username.is_empty() {
@@ -67,7 +65,12 @@ pub async fn handle(
                 str.to_string()
             },
             Command::Top => {
-                let str = cs.get_top()?;
+                let user = m.from().unwrap().clone();
+                let username = user.username.unwrap_or_else(|| String::from(""));
+                let mut str = String::from("*Вы НЕ зарегистрированны\\.*");
+                if cs.user_exist(&username)? {
+                    str = cs.get_top()?;
+                }
                 str
             },
         }
@@ -88,17 +91,18 @@ pub async fn handle(
                             if &username != &sender_username
                                 && &username != cs.bot_username.as_str() {
                                 let now = Utc::now();
-                                let mut limitation_data = cs.get_coins_per_day(&username)?;
+                                let mut limitation_data = cs.get_coins_per_day(&sender_username)?;
                                 let date = NaiveDate::from_ymd_opt(now.year(), now.month(), now.day()).unwrap();
                                 let current_date = date.format_with_items(StrftimeItems::new("%Y-%m-%d")).to_string();
 
                                 if limitation_data.current_date != current_date {
-                                    cs.reset_limits(&username, &current_date)?;
+                                    cs.reset_limits(&sender_username, &current_date)?;
                                     limitation_data.coins_per_day = 0;
                                 }
 
                                 if limitation_data.coins_per_day < cs.max_by_day_coins {
                                     cs.increase_coin_count(&username)?;
+                                    cs.increase_coin_per_day_count(&sender_username)?;
                                     response = format!("@{} получил {}", &username, cs.coin);
                                     let id = cs.get_id_by_username(&username)?;
                                     bot.send_message(UserId(id), format!("Вам передали {} от @{}", cs.coin, &sender_username)).await?;
@@ -112,7 +116,7 @@ pub async fn handle(
                     }
                 }
             } else {
-                response = String::from("Вы не зарегистрированны");
+                response = String::from("*Вы НЕ зарегистрированны\\.*");
             }
         }
     }
