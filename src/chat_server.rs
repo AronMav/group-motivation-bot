@@ -136,7 +136,6 @@ impl ChatServer {
         Ok(())
     }
 
-
     pub fn get_id_by_username(&self, username: &String) -> Result<u64> {
         let lock = self.database.lock().unwrap();
         let mut stmt = lock.prepare(
@@ -163,8 +162,8 @@ impl ChatServer {
         let lock = self.database.lock().unwrap();
         let mut stmt = lock.prepare(
             "SELECT
-                firstName,
-                lastName,
+                IFNULL(firstName,'') as firstName,
+                IFNULL(lastName,'') as lastName,
                 username,
                 sum(coins) as coins
                 FROM users

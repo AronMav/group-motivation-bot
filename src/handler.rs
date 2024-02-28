@@ -37,7 +37,7 @@ pub async fn handle(
 
     let mut response = String::from("");
 
-    if let Ok(command) = Command::parse(text, cs.bot_name.as_str()) {
+    if let Ok(command) = Command::parse(text, cs.bot_username.as_str()) {
         response = match command {
             Command::Start => {
                 let str =  Command::descriptions().to_string();
@@ -103,7 +103,7 @@ pub async fn handle(
                                 if limitation_data.coins_per_day < cs.max_by_day_coins {
                                     cs.increase_coin_count(&username)?;
                                     cs.increase_coin_per_day_count(&sender_username)?;
-                                    response = format!("@{} получил {}", &username, cs.coin);
+                                    response = format!("{}@{} получил {}", response + "\n", &username, cs.coin);
                                     let id = cs.get_id_by_username(&username)?;
                                     bot.send_message(UserId(id), format!("Вам передали {} от @{}", cs.coin, &sender_username)).await?;
                                 } else {
@@ -115,6 +115,7 @@ pub async fn handle(
                         }
                     }
                 }
+
             } else {
                 response = String::from("*Вы НЕ зарегистрированны\\.*");
             }

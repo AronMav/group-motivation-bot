@@ -25,6 +25,7 @@ fn run_migrations(conn: &Connection) -> Result<()> {
             coinsPerDay INTEGER NOT NULL DEFAULT 0,
             coins	    INTEGER NOT NULL DEFAULT 0,
             PRIMARY KEY(id));
+            
             CREATE TABLE IF NOT EXISTS questions (
             messageId INTEGER NOT NULL,
             resolved BOOLEAN NOT NULL DEFAULT False);",
