@@ -83,42 +83,46 @@ pub async fn handle(
         {
             let sender = m.from().unwrap().clone();
             let sender_username = sender.username.unwrap_or_else(|| String::from(""));
-            if cs.user_exist(&sender_username)? {
-                for word in text.split(" ") {
-                    if word.contains("@") {
-                        let username = word.replace("@", "");
-                        if cs.user_exist(&username)? {
-                            if &username != &sender_username
-                                && &username != cs.bot_username.as_str() {
-                                let now = Utc::now();
-                                let mut limitation_data = cs.get_coins_per_day(&sender_username)?;
-                                let date = NaiveDate::from_ymd_opt(now.year(), now.month(), now.day()).unwrap();
-                                let current_date = date.format_with_items(StrftimeItems::new("%Y-%m-%d")).to_string();
+            if !cs.user_exist(&sender_username)? {
+                response = String::from("*Вы НЕ зарегистрированны\\.*");
+                bot.send_message(m.chat.id, response).parse_mode(ParseMode::MarkdownV2).await?;
+                return Ok(());
+            }
+            for word in text.split(" ") {
+                
+                if !word.contains("@") {
+                    continue;
+                }
+                let username = word.replace("@", "");
+                if !cs.user_exist(&username)? {
+                    response = format!("{}Пользователь @{} не зарегистрирован", response + "\n", &username);
+                    continue;
+                }
+                if &username == &sender_username
+                    && &username == cs.bot_username.as_str() {
+                    continue;
+                }
+                
+                let now = Utc::now();
+                let mut limitation_data = cs.get_coins_per_day(&sender_username)?;
+                let date = NaiveDate::from_ymd_opt(now.year(), now.month(), now.day()).unwrap();
+                let current_date = date.format_with_items(StrftimeItems::new("%Y-%m-%d")).to_string();
 
-                                if limitation_data.current_date != current_date {
-                                    cs.reset_limits(&sender_username, &current_date)?;
-                                    limitation_data.coins_per_day = 0;
-                                }
-
-                                if limitation_data.coins_per_day < cs.max_by_day_coins {
-                                    cs.increase_coin_count(&username)?;
-                                    cs.increase_coin_per_day_count(&sender_username)?;
-                                    response = format!("{}@{} получил {}", response + "\n", &username, cs.coin);
-                                    let id = cs.get_id_by_username(&username)?;
-                                    bot.send_message(UserId(id), format!("Вам передали {} от @{}", cs.coin, &sender_username)).await?;
-                                } else {
-                                    response = format!("Вы привысили максимальное количество {} в день", cs.coin);
-                                }
-                            }
-                        } else {
-                            response = format!("Пользователь @{} не зарегистрирован", &username);
-                        }
-                    }
+                if limitation_data.current_date != current_date {
+                    cs.reset_limits(&sender_username, &current_date)?;
+                    limitation_data.coins_per_day = 0;
                 }
 
-            } else {
-                response = String::from("*Вы НЕ зарегистрированны\\.*");
-            }
+                if limitation_data.coins_per_day < cs.max_by_day_coins {
+                    cs.increase_coin_count(&username)?;
+                    cs.increase_coin_per_day_count(&sender_username)?;
+                    response = format!("{}@{} получил {}", response + "\n", &username, cs.coin);
+                    let id = cs.get_id_by_username(&username)?;
+                    bot.send_message(UserId(id), format!("Вам передали {} от @{}", cs.coin, &sender_username)).await?;
+                } else {
+                    response = format!("{}Вы привысили максимальное количество {} в день", response + "\n", cs.coin);
+                }
+            }   
         }
     }
 
