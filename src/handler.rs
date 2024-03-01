@@ -44,25 +44,25 @@ pub async fn handle(
                 str
             },
             Command::Reg(key) => {
-                let mut str = "*Регистрация НЕ выполнена*\\.\n\
-                Ключ задан неверно";
+                let mut str = String::from("*Регистрация НЕ выполнена*\\.\n\
+                Ключ задан неверно");
                 if key == cs.registration_key {
                     let user = m.from().unwrap().clone();
                     let sender = UserData::get_new_user(user.clone());
                     let username = &sender.username.to_string();
-                    str = "*Регистрация НЕ выполнена*\\.\n\
+                    str = String::from("*Регистрация НЕ выполнена*\\.\n\
                     Необходимо установить в профиле Имя пользователя\\(Username\\)\\.\n\
-                    При смене имени пользователя необходимо снова запустить команду регистрации\\.";
+                    При смене имени пользователя необходимо снова запустить команду регистрации\\.");
                     if !username.is_empty() {
                         if !cs.user_exist(username)? {
                             cs.add_user(&sender)?;
-                            str = "Регистрация прошла успешно";
+                            str = String::from("Регистрация прошла успешно");
                         } else {
-                            str = "Вы уже зарегистрированны";
+                            str = String::from("Вы уже зарегистрированны");
                         }
                     }
                 } 
-                str.to_string()
+                str
             },
             Command::Top => {
                 let user = m.from().unwrap().clone();
