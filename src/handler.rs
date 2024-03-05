@@ -44,30 +44,34 @@ pub async fn handle(
                 str
             },
             Command::Reg(key) => {
-                let mut str = String::from("*Регистрация НЕ выполнена*\\.\n\
-                Ключ задан неверно");
-                if key == cs.registration_key {
-                    let user = m.from().unwrap().clone();
-                    let sender = UserData::get_new_user(user.clone());
-                    let username = &sender.username.to_string();
+                let mut str = format!("Регистрация возможна через личное сообщение боту @{}", cs.bot_username);
+                if m.chat.id.0 > 0i64 {
                     str = String::from("*Регистрация НЕ выполнена*\\.\n\
+                Ключ задан неверно");
+                    if key == cs.registration_key {
+                        let user = m.from().unwrap().clone();
+                        let sender = UserData::get_new_user(user.clone());
+                        let username = &sender.username.to_string();
+                        str = String::from("*Регистрация НЕ выполнена*\\.\n\
                     Необходимо установить в профиле Имя пользователя\\(Username\\)\\.\n\
                     При смене имени пользователя необходимо снова запустить команду регистрации\\.");
-                    if !username.is_empty() {
-                        if !cs.user_exist(username)? {
-                            cs.add_user(&sender)?;
-                            str = String::from("Регистрация прошла успешно");
-                        } else {
-                            str = String::from("Вы уже зарегистрированны");
+                        if !username.is_empty() {
+                            if !cs.user_exist(username)? {
+                                cs.add_user(&sender)?;
+                                str = String::from("Регистрация прошла успешно");
+                            } else {
+                                str = String::from("Вы уже зарегистрированны");
+                            }
                         }
                     }
-                } 
+                }
                 str
             },
             Command::Top => {
                 let user = m.from().unwrap().clone();
                 let username = user.username.unwrap_or_else(|| String::from(""));
-                let mut str = String::from("*Вы НЕ зарегистрированны\\.*");
+                let mut str = format!("*Вы НЕ зарегистрированны*\\.\n\
+                Регистрация возможна через личное сообщение боту @{}", cs.bot_username);
                 if cs.user_exist(&username)? {
                     str = cs.get_top()?;
                 }
@@ -84,8 +88,9 @@ pub async fn handle(
             let sender = m.from().unwrap().clone();
             let sender_username = sender.username.unwrap_or_else(|| String::from(""));
             if !cs.user_exist(&sender_username)? {
-                response = String::from("*Вы НЕ зарегистрированны\\.*");
-                bot.send_message(m.chat.id, response).parse_mode(ParseMode::MarkdownV2).await?;
+                response = format!("*Вы НЕ зарегистрированны*\\.\n\
+                Регистрация возможна через личное сообщение боту @{}", cs.bot_username);
+                bot.send_message(m.chat.id, response.replace("_","\\_")).parse_mode(ParseMode::MarkdownV2).await?;
                 return Ok(());
             }
             for word in text.split(" ") {
@@ -99,7 +104,7 @@ pub async fn handle(
                     continue;
                 }
                 if &username == &sender_username
-                    && &username == cs.bot_username.as_str() {
+                    || &username == cs.bot_username.as_str() {
                     continue;
                 }
                 
@@ -118,7 +123,9 @@ pub async fn handle(
                     cs.increase_coin_per_day_count(&sender_username)?;
                     response = format!("{}@{} получил {}", response + "\n", &username, cs.coin);
                     let id = cs.get_id_by_username(&username)?;
-                    bot.send_message(UserId(id), format!("Вам передали {} от @{}", cs.coin, &sender_username)).await?;
+                    if m.chat.id.0 > 0i64 {
+                        bot.send_message(UserId(id), format!("Вам передали {} от @{}", cs.coin, &sender_username)).await?;
+                    }
                 } else {
                     response = format!("{}Вы привысили максимальное количество {} в день", response + "\n", cs.coin);
                 }
@@ -127,7 +134,7 @@ pub async fn handle(
     }
 
     if !response.is_empty() {
-        bot.send_message(m.chat.id, response).parse_mode(ParseMode::MarkdownV2).await?;
+        bot.send_message(m.chat.id, response.replace("_","\\_")).parse_mode(ParseMode::MarkdownV2).await?;
     }
 
     Ok(())

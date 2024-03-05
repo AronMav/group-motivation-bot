@@ -1,15 +1,12 @@
-pub mod handler;
 mod chat_server;
 mod db;
+pub mod handler;
 
-use std::{sync::Arc};
 use std::env::var;
+use std::sync::Arc;
 use teloxide::prelude::*;
 
-use crate::{
-    handler::handle,
-    chat_server::ChatServer
-};
+use crate::{chat_server::ChatServer, handler::handle};
 
 #[tokio::main]
 async fn main() {
@@ -28,21 +25,21 @@ async fn run() {
     let bot_username = var("BOT_USERNAME").expect("$BOT_USERNAME is not set");
     let coin = var("COIN").expect("$COIN is not set");
     let key_word = var("KEY_WORD").expect("$KEY_WORD is not set");
-    let max_by_day_coins:i32 = var("MAX_BY_DAY_COINS").expect("$MAX_BY_DAY_COINS is not set").parse().unwrap();
-    let chat_server = Arc::new(
-        ChatServer::new(
-            db_path,
-            registration_key,
-            bot_name,
-            bot_username,
-            coin,
-            key_word,
-            max_by_day_coins
-        )
-    );
+    let max_by_day_coins: i32 = var("MAX_BY_DAY_COINS")
+        .expect("$MAX_BY_DAY_COINS is not set")
+        .parse()
+        .unwrap();
+    let chat_server = Arc::new(ChatServer::new(
+        db_path,
+        registration_key,
+        bot_name,
+        bot_username,
+        coin,
+        key_word,
+        max_by_day_coins,
+    ));
 
-    let handler = dptree::entry()
-        .branch(Update::filter_message().endpoint(handle));
+    let handler = dptree::entry().branch(Update::filter_message().endpoint(handle));
 
     Dispatcher::builder(bot, handler)
         .dependencies(dptree::deps![chat_server])
