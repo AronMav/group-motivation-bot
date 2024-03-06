@@ -121,7 +121,7 @@ pub async fn handle(
                 if limitation_data.coins_per_day < cs.max_by_day_coins {
                     cs.increase_coin_count(&username)?;
                     cs.increase_coin_per_day_count(&sender_username)?;
-                    response = format!("{}@{} получил {}", response + "\n", &username, cs.coin);
+                    response = format!("{}@{} держи {}", response + "\n", &username, cs.coin);
                     let id = cs.get_id_by_username(&username)?;
                     if m.chat.id.0 > 0i64 {
                         bot.send_message(UserId(id), format!("Вам передали {} от @{}", cs.coin, &sender_username)).await?;
