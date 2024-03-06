@@ -40,7 +40,10 @@ pub async fn handle(
     if let Ok(command) = Command::parse(text, cs.bot_username.as_str()) {
         response = match command {
             Command::Start => {
-                let str =  Command::descriptions().to_string();
+                let mut str= String::from("Команда не доступна в группе");
+                if m.chat.id.0 > 0i64 {
+                    str = Command::descriptions().to_string();
+                }
                 str
             },
             Command::Reg(key) => {
