@@ -16,7 +16,7 @@ tokio-stream = "0.1.14"
 
 lazy_static = "1.4.0"
 
-chrono = "0.4.34"
+chrono = "0.4.35"
 openssl = { version = "0.10.64", features = ["vendored"] }
 rusqlite = { version = "0.31.0", features = ["bundled"] }
 openssl-sys = "0.9.101"
